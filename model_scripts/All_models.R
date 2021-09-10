@@ -1,6 +1,8 @@
 #data frame
 assays <- read.csv("Grayling_behavioraldata_clean.csv")
 
+assays <- read.csv("/Users/leapollack/Documents/gitHub/Grayling_personality_models/data/Grayling_behavioraldata_clean.csv")
+
 ##load libraries
 library(tidyverse)
 library(dplyr)
@@ -400,26 +402,42 @@ icc(timecenter_4, re.form= ~(1| ID), typical = "median", prob = 0.95, ppd = TRUE
                        control = list(adapt_delta = 0.9999999999999999, max_treedepth = 29))
   summary(timecenter_4N)
   
-####13C as outcome analysis ####
 
-#make new data frame that only uses Trial 1
+####multivariate 13C and 15N####
+
+  #make new data frame that only uses Trial 1
+  assays_t1 <- assays %>% filter(Trial < 2)
+  
+  #mutivariate model
+  multi_iso_norand <- brm(
+    mvbind(X13C, X15N) ~ 1  + Pop + Type + set_rescor(T), 
+    data = assays_t1,
+    iter = 10000, warmup = 2000, chains = 3, cores = 3,
+    control = list(adapt_delta = 0.9, max_treedepth = 10))
+
+    multi_iso_norand
+
+    brms::pp_check(multi_iso_norand, resp = "X13C")
+    brms::pp_check(multi_iso_norand, resp = "X15N")
+
+####posthoc analysis of differences between catch types####
+
+#make sure data set does not include standardized outcome variables
+assays <- read.csv("Grayling_behavioraldata_clean.csv")
 assays_t1 <- assays %>% filter(Trial < 2)
 
-#model with location and technique as predictors
-carbon_m <- brm(data = assays_t1, family = gaussian(),
-                X13C  ~ 1 + Pop + Type,
+#model of length with location and technique as predictors
+length_1 <- brm(data = assays_t1, family = gaussian(),
+                ST_length  ~ 1 + Pop + Type,
                 iter = 5000, warmup = 1000, 
                 chains = 3, cores = future::availableCores(),
                 control = list(adapt_delta = 0.99999999, max_treedepth = 25))
 
-####15N as outcome analysis ####
+length_1
 
-#use new data frame that only uses Trial 1 (made in 13C subsection)
-
-#model with location and technique as predictors
-nitrogen_m <- brm(data = assays_t1, family = gaussian(),
-                  X15N  ~ 1  + Pop + Type,
-                  iter = 5000, warmup = 1000, 
-                  chains = 3, cores = future::availableCores(),
-                  control = list(adapt_delta = 0.99999999, max_treedepth = 25))
-
+#model of body condition with location and technique as predictors
+condition_1 <- brm(data = assays_t1, family = gaussian(),
+                K_ST*1000  ~ 1 + Pop + Type,
+                iter = 5000, warmup = 1000, 
+                chains = 3, cores = future::availableCores(),
+                control = list(adapt_delta = 0.99999999, max_treedepth = 25))
