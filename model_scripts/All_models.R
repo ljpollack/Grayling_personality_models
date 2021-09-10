@@ -1,8 +1,6 @@
 #data frame
 assays <- read.csv("Grayling_behavioraldata_clean.csv")
 
-assays <- read.csv("/Users/leapollack/Documents/gitHub/Grayling_personality_models/data/Grayling_behavioraldata_clean.csv")
-
 ##load libraries
 library(tidyverse)
 library(dplyr)
